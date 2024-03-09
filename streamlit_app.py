@@ -2,8 +2,8 @@ import streamlit as st
 
 
 # set basic page config
-st.set_page_config(page_title="Streamlit Template",
-                    page_icon='✅',
+st.set_page_config(page_title="[WIP] Selene",
+                    page_icon='🔨',
                     layout='centered',
                     initial_sidebar_state='collapsed')
 

@@ -10,6 +10,7 @@ class Model(nn.Module):
         self.fc2 = nn.Linear(4, 3)
         self.relu2 = nn.ReLU()
         self.out = nn.Linear(3, 2)
+        self.log_softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, X):
         out = self.fc1(X)
@@ -17,4 +18,5 @@ class Model(nn.Module):
         out = self.fc2(out)
         out = self.relu2(out)
         out = self.out(out)
-        return out
+        log_probs = self.log_softmax(out)
+        return log_probs

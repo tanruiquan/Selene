@@ -16,7 +16,7 @@ In this task, learners will practice implementing a Multi-Layer Perceptron (MLP)
 
 ### Data
 
-The dataset comprises 10,662 movie reviews, each represented as an embedding vector of size 100. For ease of training, the reviews are organized into batches of 64. The labels are binary, with the class 'negative' mapped to 0 and 'positive' mapped to 1. The necessary data preprocessing, including vectorization and label mapping, has already been performed. Therefore, the model should accept input of shape (64, 100) and return output of shape (62, 2). 
+The dataset comprises 10,662 movie reviews, each represented as an embedding vector of size 100. For ease of training, the reviews are organized into batches of 64. The labels are binary, with the class 'negative' mapped to 0 and 'positive' mapped to 1. The necessary data preprocessing, including vectorization and label mapping, has already been performed. Therefore, the model should accept input of shape (64, 100) and return output of shape (64, 2). 
 
 ### Learner Instructions
 
@@ -39,5 +39,5 @@ In the `__init()__` method, define the output layer (out) with an input size of 
 Finally, in the `__init__()` method, define the log softmax layer, which is applied to the output for obtaining log probabilities.
 
 **Step 7: Define the Forward Pass**
-In the `forward()` method, add `X` as an input parameter. Then, specifies how input `X` passes through the layers to produce output log probabilities.
+In the `forward()` method, add `X` as an input parameter. Then, specifies how input `X` passes through the layers to produce output log probabilities. Note that the model should accept input of shape (64, 100) and return output shape of (64, 2).
 

@@ -3,4 +3,4 @@ streamlit
 openai
 torch 
 torchvision
-streamlit_code_editor
+streamlit-monaco

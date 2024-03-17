@@ -1,4 +1,4 @@
-class SimpleNet1(nn.Module):
+class ExpectedModel(nn.Module):
     def __init__(self):
         super().__init__()
         # Define 1st fully connected (i.e., linear) hidden layer

@@ -1,4 +1,4 @@
-class ExpectedModel(nn.Module):
+class Model(nn.Module):
     def __init__(self):
         super().__init__()
         self.embedding = nn.Embedding(10000, 300)
@@ -20,7 +20,7 @@ class ExpectedModel(nn.Module):
         batch_size, _ = inputs.shape
 
         X = self.embedding(inputs)  # (batch_size, seq_len, embed_size)
-        X = X.permute(1, 0, 2)
+        X = X.view(seq_len, batch_size, embed_size)
         rnn_outputs, hidden = self.gru(X, hidden)
 
         last_hidden = hidden.view(2, 2, batch_size, 512)[-1]

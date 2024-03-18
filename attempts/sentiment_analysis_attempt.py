@@ -17,10 +17,10 @@ class Model(nn.Module):
         self.log_softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, inputs, hidden):
-        batch_size, _ = inputs.shape
+        batch_size, seq_len = inputs.shape
 
         X = self.embedding(inputs)  # (batch_size, seq_len, embed_size)
-        X = X.view(seq_len, batch_size, embed_size)
+        X = X.view(seq_len, batch_size, 300)
         rnn_outputs, hidden = self.gru(X, hidden)
 
         last_hidden = hidden.view(2, 2, batch_size, 512)[-1]

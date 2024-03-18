@@ -14,7 +14,8 @@ st.set_page_config(page_title="Selene",
 
 st.title(":books: Selene")
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+if "client" not in st.session_state:
+    st.session_state.client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-3.5-turbo"
@@ -40,7 +41,7 @@ def ai_button():
                 {"role": "assistant", "content": "You have already solved the task!"})
         else:
             response = st.write_stream(generate_report(
-                client, task_desc, submission, solution, is_naive=False))
+                st.session_state.client, task_desc, submission, solution, is_naive=st.session_state.is_naive_prompt))
     st.session_state.messages.append(
         {"role": "assistant", "content": response})
 
@@ -87,7 +88,7 @@ with left_column:
     st.subheader("Task description")
     with st.container(height=500):
         st.markdown(task_desc)
-    if st.button("Help me!"):
+    if st.button("Generate AI feedback"):
         ai_button()
         st.rerun()
     for message in reversed(st.session_state.messages):

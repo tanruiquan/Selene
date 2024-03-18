@@ -1,4 +1,4 @@
-## Movie Review Sentiment Classification
+## Movie Review Sentiment Classification with MLP
 
 ### Goal
 

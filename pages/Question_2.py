@@ -4,7 +4,8 @@ import torch.nn as nn
 from openai import OpenAI
 from streamlit_monaco import st_monaco
 
-from utils.utils import generate_report, read_file
+from utils.utils import (compare_model_flow, compare_model_traces,
+                         get_naive_prompt, get_prompt, read_file)
 
 # set basic page config
 st.set_page_config(page_title="Selene",
@@ -14,7 +15,8 @@ st.set_page_config(page_title="Selene",
 
 st.title(":books: Selene")
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+if "client" not in st.session_state:
+    st.session_state.client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 if "q2_messages" not in st.session_state:
     st.session_state.q2_messages = []
@@ -36,8 +38,7 @@ def ai_button():
             st.session_state.q2_messages.append(
                 {"role": "assistant", "content": "You have already solved the task!"})
         else:
-            response = st.write_stream(generate_report(
-                client, task_desc, submission, solution, is_naive=False))
+            response = st.write_stream(generate_report(task_desc, submission, solution, is_naive=st.session_state.is_naive_prompt))
     st.session_state.q2_messages.append(
         {"role": "assistant", "content": response})
 
@@ -102,6 +103,41 @@ def train(model, X_train: torch.Tensor, y_train: torch.Tensor, optimizer, criter
         losses.append(loss.item())
     return losses
 
+def generate_report(task_desc: str, submission: str, solution: str, is_naive: bool = False):
+    if is_naive:
+        prompt = get_naive_prompt(task_desc, submission).strip()
+    else:
+        # Modules tracing
+        torch.manual_seed(0)
+        exec(submission)
+        model = locals()["Model"]()
+        torch.manual_seed(0)
+        exec(solution)
+        expected_model = locals()["ExpectedModel"]()
+        trace = compare_model_traces(model, expected_model)
+
+        if not trace:
+            # Hook tracing
+            X_train: torch.Tensor = torch.randint(0, 10000, (64, 100))
+            hidden: torch.Tensor = model.init_hidden(X_train.shape[0])
+            trace = compare_model_flow(model, expected_model, X_train, hidden)
+
+        # Hooks tracing
+        prompt = get_prompt(task_desc, submission, solution, trace).strip()
+
+    print(prompt)
+    response = st.session_state.client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are an AI teaching assistant helping a student with a coding task. You should answer the student's question in ways that will promote learning and understanding. Do not include a model solution, the corrected code, or automated tests in the response."},
+            {"role": "user", "content": prompt},
+        ],
+        stream=True
+    )
+
+    return response 
+
+
 left_column, right_column = st.columns(2)
 
 
@@ -127,7 +163,7 @@ with left_column:
     st.subheader("Task description")
     with st.container(height=500):
         st.markdown(task_desc)
-    if st.button("Help me!"):
+    if st.button("Generate AI feedback"):
         ai_button()
         st.rerun()
     for message in reversed(st.session_state.q2_messages):

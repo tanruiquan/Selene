@@ -106,13 +106,14 @@ def compare_model_traces(submitted_model: nn.Module, expected_model: nn.Module) 
         c1 = Counter(submitted_modules)
         c2 = Counter(expected_modules)
         diff = c1 - c2
-        return f"You have the following extra layers: {diff.items()}"
+        extra = ", ".join(map(lambda x: x.__name__, diff.keys()))
+        return f"The student has the following extra layers: {extra}."
     elif len(expected_modules) > len(submitted_modules):
         c1 = Counter(map(lambda x: type(x), expected_modules))
         c2 = Counter(map(lambda x: type(x), submitted_modules))
         diff = c1 - c2
         missing = ", ".join(map(lambda x: x.__name__, diff.keys()))
-        return f"I am missing the following layers: {missing}. I could not really figure where it is missing. Could you help me with that?"
+        return f"The student has the following missing layers: {missing}."
 
     module_count = 1
     linear_layer_count = 1
@@ -120,28 +121,27 @@ def compare_model_traces(submitted_model: nn.Module, expected_model: nn.Module) 
     dropout_count = 1
     for s, e in zip(submitted_modules, expected_modules):
         if type(s) != type(e):
-            result.append(
-                f"Your {make_ordinal(module_count)} module is of type {type(s)} while the expected module is of type {type(e)}")
+            result.append(f"The student's {make_ordinal(module_count)} layer is a {s.__name__} layer while the expected layer is a {e.__name__} layer.")
         elif isinstance(s, nn.Linear):
             if s.in_features != e.in_features or s.out_features != e.out_features:
-                result.append(f"Your {make_ordinal(linear_layer_count)} linear layer have an input size of {s.in_features} and an output size of {s.out_features} while the expected linear layer have an input size of {e.in_features} and an output size of {e.out_features}")
+                result.append(f"The student's {make_ordinal(linear_layer_count)} linear layer have an input size of {s.in_features} and an output size of {s.out_features} while the expected linear layer have an input size of {e.in_features} and an output size of {e.out_features}.")
             if s.bias is None and e.bias is not None:
                 result.append(
-                    f"Your {make_ordinal(linear_layer_count)} linear layer is missing a bias term")
+                    f"The student's {make_ordinal(linear_layer_count)} linear layer is missing a bias term.")
             if s.bias is not None and e.bias is None:
                 result.apennd(
-                    f"Your {make_ordinal(linear_layer_count)} linear layer is not suppose to have a bias term")
+                    f"The student's {make_ordinal(linear_layer_count)} linear layer is not suppose to have a bias term.")
             linear_layer_count += 1
         elif is_activation_function(s) and type(s) != type(e):
             result.append(
-                f"Your {make_ordinal(activation_function_count)} activation function is of type {type(s)} while the expected activation function is of type {type(e)}")
+                f"The student's {make_ordinal(activation_function_count)} activation function is a {s.__name__} function while the expected activation function is a {e.__name__}.")
             activation_function_count += 1
         elif isinstance(s, nn.Dropout) and s.p != e.p:
             result.append(
-                f"Your {make_ordinal(dropout_count)} dropout probability is {s.p} while the expected dropout probability is {e.p}")
+                f"The student's {make_ordinal(dropout_count)} dropout layer has a dropout probability of {s.p} while the expected dropout probability is {e.p}.")
             dropout_count += 1
         module_count += 1
-    return ".".join(result)
+    return " ".join(result)
 
 def get_modules(model: nn.Module) -> list[nn.Module]:
     """
@@ -236,3 +236,62 @@ def get_prompt(task_desc: str, submission: str, solution: str, trace: str) -> st
 
 # Answer
 """
+
+class LoggingModule(nn.Module):
+    def __init__(self, model: nn.Module):
+        super().__init__()
+        self.model = model
+        self.log = {}
+
+    def __enter__(self):
+        self.handles = []
+        for name, layer in self.model.named_modules():
+            layer.name = name
+            handle = layer.register_forward_hook(self.hook)
+            self.handles.append(handle)
+        return self
+
+    def __exit__(self, *args):
+        for handle in self.handles:
+            handle.remove()
+
+    def forward(self, *x):
+        _ = self.model(*x)
+        return self.log
+
+    def hook(self, module: nn.Module, input: torch.Tensor, output: torch.Tensor):
+        self.log[(module.__class__.__name__, module.name)] = output
+
+
+def compare_model_flow(submitted_model: nn.Module, expected_model: nn.Module, *input: torch.Tensor) -> str:
+    # Wrap the modules in a LoggingModule
+    with LoggingModule(submitted_model) as submitted, LoggingModule(expected_model) as expected:
+        submitted_logs = submitted(*input)
+        expected_logs = expected(*input)
+
+    assert len(submitted_logs) == len(expected_logs), "The number of layers in the submitted model does not match the expected model"
+    print(f"Submitted logs: {submitted_logs.keys()}")
+    print(f"Exptected logs: {expected_logs.keys()}")
+    submitted_checked = []
+    expected_checked = []
+    for (s_layer, s_output), (e_layer, e_output) in zip(submitted_logs.items(), expected_logs.items()):
+        curr_class_name, curr_var_name = s_layer
+        if s_layer[0] in ("RNN", "LSTM", "GRU"):
+            s_out = s_output[0]
+            e_out = e_output[0]
+            if s_out.shape[0] == e_out.shape[1] and s_out.shape[1] == e_out.shape[0]: # resolve the batch_first issue
+                s_out = s_out.transpose(0, 1)
+            # print(f"Shape of s_out: {s_out.shape}, Shape of e_out: {e_out.shape}")
+            if not torch.allclose(s_out, e_out) and len(submitted_checked) == 0:
+                return f"The student made a mistake before calling the {curr_class_name} layer with the variable name {curr_var_name}."
+            if not torch.allclose(s_out, e_out) and len(submitted_checked) > 0:
+                prev_class_name, prev_var_name = submitted_checked[-1]
+                return f"The student made a mistake after calling the {prev_class_name} layer with the variable name {prev_var_name} and before calling the {curr_class_name} layer with the variable name {curr_var_name}."
+        elif not torch.allclose(s_output, e_output) and len(submitted_checked) == 0:
+            return f"The student made a mistake before calling the {curr_class_name} layer with the variable name {curr_var_name}."
+        elif not torch.allclose(s_output, e_output) and len(submitted_checked) > 0:
+            prev_class_name, prev_var_name = submitted_checked[-1]
+            return f"The student made a mistake after calling the {prev_class_name} layer with the variable name {prev_var_name} and before calling the {curr_class_name} layer with the variable name {curr_var_name}."
+        submitted_checked.append(s_layer)
+        expected_checked.append(e_layer)
+    return f"The student likely made a mistake after calling the {curr_class_name} layer with the variable name {curr_var_name}."

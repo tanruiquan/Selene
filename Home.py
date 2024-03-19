@@ -31,7 +31,6 @@ st.header("Configuration")
 selected_prompt = st.radio(
     "Select the AI prompt",
     ["Naive", "Smart"],
-    # index = 0 if st.session_state.is_naive_prompt else 1,
     captions=["The prompt only contains the task description and submission.", "The prompt contains the task description, submission and trace outputs."])
 
 if selected_prompt == 'Naive':

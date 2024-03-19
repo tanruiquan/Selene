@@ -84,14 +84,6 @@ def get_naive_prompt(task_desc: str, submission: str) -> str:
 # My Code
 {submission}
 
-# Question
-I am learning Natural Language Processing where we use the PyTorch
-library. I have been given an NLP task with the above task
-description. I have written code given above. Please provide suggestions on how 
-I could fix my code so that it fulfils the requirements in 
-the task description. Do not include a model solution, the corrected code,
-or automated tests in the response.
-
 # Answer
 """
 

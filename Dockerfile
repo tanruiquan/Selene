@@ -39,7 +39,7 @@ HEALTHCHECK --interval=1m --timeout=10s \
 
 COPY . .
 
-CMD ["streamlit", "run", "streamlit_app.py"]
+CMD ["streamlit", "run", "Home.py"]
 
 # Some docker commands see below:
 # docker build --progress=plain --tag streamlit:latest .

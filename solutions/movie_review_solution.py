@@ -11,10 +11,10 @@ class ExpectedModel(nn.Module):
         self.fc3 = nn.Linear(3, 3)
         self.relu3 = nn.ReLU()
         # Define output layer (which is also a linear layer)
-        self.out = nn.Linear(3, 2)        
+        self.out = nn.Linear(3, 2)
         # Define log softmax layer
         self.log_softmax = nn.LogSoftmax(dim=1)
-        
+
     def forward(self, X):
         out = self.fc1(X)
         out = self.relu1(out)

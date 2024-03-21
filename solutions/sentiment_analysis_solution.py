@@ -3,9 +3,9 @@ class ExpectedModel(nn.Module):
         super().__init__()
         self.embedding = nn.Embedding(10000, 300)
         self.gru = nn.GRU(input_size=300, hidden_size=512,
-                          num_layers=2, dropout=0.5, bidirectional=True)
+                          num_layers=2, dropout=0.5)
 
-        self.fc1 = nn.Linear(512*2, 128)
+        self.fc1 = nn.Linear(512, 128)
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(0.5)
 
@@ -22,10 +22,7 @@ class ExpectedModel(nn.Module):
         X = self.embedding(inputs)  # (batch_size, seq_len, embed_size)
         X = X.permute(1, 0, 2)
         rnn_outputs, hidden = self.gru(X, hidden)
-
-        last_hidden = hidden.view(2, 2, batch_size, 512)[-1]
-        h_1, h_2 = last_hidden[0], last_hidden[1]
-        final_hidden = torch.cat((h_1, h_2), 1)  # Concatenate both states
+        final_hidden = hidden[-1]
 
         X = self.fc1(final_hidden)
         X = self.relu1(X)
@@ -40,4 +37,4 @@ class ExpectedModel(nn.Module):
         return log_probs
 
     def init_hidden(self, batch_size):
-        return torch.zeros(2 * 2, batch_size, 512)
+        return torch.zeros(2, batch_size, 512)

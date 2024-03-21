@@ -73,7 +73,7 @@ def generate_report(client, task_desc: str, submission: str, solution: str, is_n
         stream=True
     )
 
-    return response 
+    return response
 
 
 def get_naive_prompt(task_desc: str, submission: str) -> str:
@@ -86,6 +86,7 @@ def get_naive_prompt(task_desc: str, submission: str) -> str:
 
 # Answer
 """
+
 
 def compare_model_traces(submitted_model: nn.Module, expected_model: nn.Module) -> str:
     result = []
@@ -113,10 +114,12 @@ def compare_model_traces(submitted_model: nn.Module, expected_model: nn.Module) 
     dropout_count = 1
     for s, e in zip(submitted_modules, expected_modules):
         if type(s) != type(e):
-            result.append(f"The student's {make_ordinal(module_count)} layer is a {s.__name__} layer while the expected layer is a {e.__name__} layer.")
+            result.append(
+                f"The student's {make_ordinal(module_count)} layer is a {s.__name__} layer while the expected layer is a {e.__name__} layer.")
         elif isinstance(s, nn.Linear):
             if s.in_features != e.in_features or s.out_features != e.out_features:
-                result.append(f"The student's {make_ordinal(linear_layer_count)} linear layer have an input size of {s.in_features} and an output size of {s.out_features} while the expected linear layer have an input size of {e.in_features} and an output size of {e.out_features}.")
+                result.append(
+                    f"The student's {make_ordinal(linear_layer_count)} linear layer have an input size of {s.in_features} and an output size of {s.out_features} while the expected linear layer have an input size of {e.in_features} and an output size of {e.out_features}.")
             if s.bias is None and e.bias is not None:
                 result.append(
                     f"The student's {make_ordinal(linear_layer_count)} linear layer is missing a bias term.")
@@ -134,6 +137,7 @@ def compare_model_traces(submitted_model: nn.Module, expected_model: nn.Module) 
             dropout_count += 1
         module_count += 1
     return " ".join(result)
+
 
 def get_modules(model: nn.Module) -> list[nn.Module]:
     """
@@ -209,10 +213,11 @@ def make_ordinal(n: int) -> str:
         suffix = ['th', 'st', 'nd', 'rd', 'th'][min(n % 10, 4)]
     return str(n) + suffix
 
-def is_activation_function(module: nn.Module) -> bool:
-    all_activation_functions = (nn.ReLU, nn.RReLU, nn.Hardtanh, nn.ReLU6, nn.Sigmoid, nn.Hardsigmoid, nn.Tanh, nn.SiLU, nn.Mish, nn.Hardswish, nn.ELU, nn.CELU, nn.SELU, nn.GLU, nn.GELU, nn.Hardshrink, nn.LeakyReLU, nn.LogSigmoid, nn.Softplus, nn.Softshrink, nn.MultiheadAttention, nn.PReLU, nn.Softsign, nn.Tanhshrink, nn.Softmin, nn.Softmax, nn.Softmax2d, nn.LogSoftmax)
-    return isinstance(module, all_activation_functions)
 
+def is_activation_function(module: nn.Module) -> bool:
+    all_activation_functions = (nn.ReLU, nn.RReLU, nn.Hardtanh, nn.ReLU6, nn.Sigmoid, nn.Hardsigmoid, nn.Tanh, nn.SiLU, nn.Mish, nn.Hardswish, nn.ELU, nn.CELU, nn.SELU, nn.GLU, nn.GELU,
+                                nn.Hardshrink, nn.LeakyReLU, nn.LogSigmoid, nn.Softplus, nn.Softshrink, nn.MultiheadAttention, nn.PReLU, nn.Softsign, nn.Tanhshrink, nn.Softmin, nn.Softmax, nn.Softmax2d, nn.LogSoftmax)
+    return isinstance(module, all_activation_functions)
 
 
 def get_prompt(task_desc: str, submission: str, solution: str, trace: str) -> str:
@@ -223,11 +228,12 @@ def get_prompt(task_desc: str, submission: str, solution: str, trace: str) -> st
 # My Code
 {submission}
 
-# Question
+# Context
 {trace}
 
 # Answer
 """
+
 
 class LoggingModule(nn.Module):
     def __init__(self, model: nn.Module):
@@ -261,7 +267,8 @@ def compare_model_flow(submitted_model: nn.Module, expected_model: nn.Module, *i
         submitted_logs = submitted(*input)
         expected_logs = expected(*input)
 
-    assert len(submitted_logs) == len(expected_logs), "The number of layers in the submitted model does not match the expected model"
+    assert len(submitted_logs) == len(
+        expected_logs), "The number of layers in the submitted model does not match the expected model"
     print(f"Submitted logs: {submitted_logs.keys()}")
     print(f"Exptected logs: {expected_logs.keys()}")
     submitted_checked = []
@@ -271,7 +278,8 @@ def compare_model_flow(submitted_model: nn.Module, expected_model: nn.Module, *i
         if s_layer[0] in ("RNN", "LSTM", "GRU"):
             s_out = s_output[0]
             e_out = e_output[0]
-            if s_out.shape[0] == e_out.shape[1] and s_out.shape[1] == e_out.shape[0]: # resolve the batch_first issue
+            # resolve the batch_first issue
+            if s_out.shape[0] == e_out.shape[1] and s_out.shape[1] == e_out.shape[0]:
                 s_out = s_out.transpose(0, 1)
             # print(f"Shape of s_out: {s_out.shape}, Shape of e_out: {e_out.shape}")
             if not torch.allclose(s_out, e_out) and len(submitted_checked) == 0:

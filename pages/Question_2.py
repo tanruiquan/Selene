@@ -4,8 +4,8 @@ import torch.nn as nn
 from openai import OpenAI
 from streamlit_monaco import st_monaco
 
-from utils.utils import (compare_model_flow, compare_model_traces,
-                         get_naive_prompt, get_prompt, read_file)
+from utils.utils import (LoggingModule, compare_model_traces, get_naive_prompt,
+                         get_prompt, read_file)
 
 # set basic page config
 st.set_page_config(page_title="Selene",
@@ -32,49 +32,39 @@ attempt = read_file("attempts/sentiment_analysis_attempt.py")
 solution = read_file("solutions/sentiment_analysis_solution.py")
 
 
-def ai_button():
-    with st.chat_message("assistant"):
-        if st.session_state.is_correct:
-            st.session_state.q2_messages.append(
-                {"role": "assistant", "content": "You have already solved the task!"})
-        else:
-            response = st.write_stream(generate_report(task_desc, submission, solution, is_naive=st.session_state.is_naive_prompt))
-    st.session_state.q2_messages.append(
-        {"role": "assistant", "content": response})
-
-
 def submit_button(submission: str, solution: str):
     st.session_state.clicked = True
     st.session_state.q2_error_message = ""
     try:
-        torch.manual_seed(0)
-        exec(submission)
-        model = locals()["Model"]()
-        torch.manual_seed(0)
-        exec(solution)
-        expected_model = locals()["ExpectedModel"]()
-        st.session_state.is_correct = check_question_2(
-            model, expected_model)
+        st.session_state.is_correct = check_question_2(submission, solution)
     except Exception as e:
         st.session_state.is_correct = False
         st.session_state.q2_error_message = e
 
-def check_question_2(model: nn.Module, expected_model: nn.Module):
+
+def check_question_2(submission: str, solution: str) -> bool:
     # Generate dummy training data
     X_train: torch.Tensor = torch.randint(0, 10000, (64, 100))
     y_train: torch.Tensor = torch.randint(0, 2, (64,))
 
     # Define loss function
     criterion = nn.NLLLoss()
+    num_epochs = 1
 
-    num_epochs = 2
-
+    torch.manual_seed(42)
+    exec(submission)
+    model = locals()["Model"]()
     optimizer = torch.optim.Adam(model.parameters())
     losses = train(model, X_train, y_train, optimizer, criterion, num_epochs)
 
+    torch.manual_seed(42)
+    exec(solution)
+    expected_model = locals()["ExpectedModel"]()
     expected_optimizer = torch.optim.Adam(expected_model.parameters())
-    expected_losses = train(expected_model, X_train, y_train, expected_optimizer, criterion, num_epochs)
+    expected_losses = train(expected_model, X_train,
+                            y_train, expected_optimizer, criterion, num_epochs)
     return losses == expected_losses
+
 
 def train(model, X_train: torch.Tensor, y_train: torch.Tensor, optimizer, criterion, num_epochs: int = 10, device: str = "cpu"):
     model.to(device)
@@ -84,11 +74,11 @@ def train(model, X_train: torch.Tensor, y_train: torch.Tensor, optimizer, criter
     losses = []
     for epoch in range(num_epochs):
         batch_size, seq_len = X_train.shape
-        hidden = model.init_hidden(batch_size) 
+        hidden = model.init_hidden(batch_size)
         if type(hidden) is tuple:
-                hidden = (hidden[0].to(device), hidden[1].to(device))  # LSTM
+            hidden = (hidden[0].to(device), hidden[1].to(device))  # LSTM
         else:
-            hidden = hidden.to(device)  # RNN, GRU 
+            hidden = hidden.to(device)  # RNN, GRU
 
         # Forward pass
         outputs = model(X_train, hidden)
@@ -102,6 +92,56 @@ def train(model, X_train: torch.Tensor, y_train: torch.Tensor, optimizer, criter
         print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
         losses.append(loss.item())
     return losses
+
+
+def compare_with_hooks(submission: str, solution: str) -> str:
+    X_train: torch.Tensor = torch.randint(0, 10000, (64, 100))
+
+    torch.manual_seed(42)
+    exec(submission)
+    model = locals()["Model"]()
+    hidden = model.init_hidden(X_train.shape[0])
+    with LoggingModule(model) as model:
+        logs = model(X_train, hidden)
+
+    torch.manual_seed(42)
+    exec(solution)
+    expected_model = locals()["ExpectedModel"]()
+    hidden = expected_model.init_hidden(X_train.shape[0])
+    with LoggingModule(expected_model) as expected_model:
+        expected_logs = expected_model(X_train, hidden)
+
+    assert len(logs) == len(expected_logs)
+
+    checked = []
+    for (layer, output), (expected_layer, expected_output) in zip(logs.items(), expected_logs.items()):
+        curr_layer_name, curr_var_name = layer
+        if curr_layer_name in ("RNN", "LSTM", "GRU"):
+            out, _ = output
+            expected_out, _ = expected_output
+            if out.permute(1, 0, 2).shape == expected_out.shape:  # Resolve batch_first
+                out = out.permute(1, 0, 2)
+            if torch.allclose(out, expected_out):
+                checked.append(layer)
+                continue
+
+            if checked:
+                prev_layer_name, prev_var_name = checked[-1]
+                return f"The student made a mistake after calling the {prev_layer_name} layer with the variable name {prev_var_name} and before calling the {curr_layer_name} layer with the variable name {curr_var_name}."
+            else:
+                return f"The student made a mistake before calling the {curr_layer_name} layer with the variable name {curr_var_name}."
+
+        if torch.allclose(output, expected_output):
+            checked.append(layer)
+            continue
+        if check:
+            prev_layer_name, prev_var_name = checked[-1]
+            return f"The student made a mistake after calling the {prev_layer_name} layer with the variable name {prev_var_name} and before calling the {curr_layer_name} layer with the variable name {curr_var_name}."
+        else:
+            return f"The student made a mistake before calling the {curr_layer_name} layer with the variable name {curr_var_name}."
+        checked.append(layer)
+    return "The student's implementation is correct."
+
 
 def generate_report(task_desc: str, submission: str, solution: str, is_naive: bool = False):
     if is_naive:
@@ -117,12 +157,9 @@ def generate_report(task_desc: str, submission: str, solution: str, is_naive: bo
         trace = compare_model_traces(model, expected_model)
 
         if not trace:
-            # Hook tracing
-            X_train: torch.Tensor = torch.randint(0, 10000, (64, 100))
-            hidden: torch.Tensor = model.init_hidden(X_train.shape[0])
-            trace = compare_model_flow(model, expected_model, X_train, hidden)
+            trace = compare_with_hooks(submission, solution)
+            # trace = compare_model_flow(model, expected_model, X_train, hidden)
 
-        # Hooks tracing
         prompt = get_prompt(task_desc, submission, solution, trace).strip()
 
     print(prompt)
@@ -135,7 +172,7 @@ def generate_report(task_desc: str, submission: str, solution: str, is_naive: bo
         stream=True
     )
 
-    return response 
+    return response
 
 
 left_column, right_column = st.columns(2)
@@ -163,9 +200,21 @@ with left_column:
     st.subheader("Task description")
     with st.container(height=500):
         st.markdown(task_desc)
+
     if st.button("Generate AI feedback"):
-        ai_button()
+        if st.session_state.is_correct:
+            content = "You have already solved the task!"
+            st.chat_message("assistant").write(content)
+            st.session_state.q2_messages.append(
+                {"role": "assistant", "content": content})
+        else:
+            stream = generate_report(
+                task_desc, submission, solution, is_naive=st.session_state.is_naive_prompt)
+            response = st.chat_message("assistant").write_stream(stream)
+            st.session_state.q2_messages.append(
+                {"role": "assistant", "content": response})
         st.rerun()
+
     for message in reversed(st.session_state.q2_messages):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])

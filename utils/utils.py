@@ -42,38 +42,38 @@ def train(model: nn.Module, X_train: torch.Tensor, y_train: torch.Tensor, criter
     return losses
 
 
-def generate_report(client, task_desc: str, submission: str, solution: str, is_naive: bool = False):
-    if is_naive:
-        prompt = get_naive_prompt(task_desc, submission).strip()
-    else:
-        # Modules tracing
-        torch.manual_seed(0)
-        exec(submission)
-        model = locals()["Model"]()
-        torch.manual_seed(0)
-        exec(solution)
-        expected_model = locals()["ExpectedModel"]()
-        trace = compare_model_traces(model, expected_model)
+# def generate_report(client, task_desc: str, submission: str, solution: str, is_naive: bool = False):
+#     if is_naive:
+#         prompt = get_naive_prompt(task_desc, submission).strip()
+#     else:
+#         # Modules tracing
+#         torch.manual_seed(0)
+#         exec(submission)
+#         model = locals()["Model"]()
+#         torch.manual_seed(0)
+#         exec(solution)
+#         expected_model = locals()["ExpectedModel"]()
+#         trace = compare_model_traces(model, expected_model)
 
-        if not trace:
-            # Hook tracing
-            trace = "Hook"
-            raise NotImplementedError()
+#         if not trace:
+#             # Hook tracing
+#             trace = "Hook"
+#             raise NotImplementedError()
 
-        # Hooks tracing
-        prompt = get_prompt(task_desc, submission, solution, trace).strip()
+#         # Hooks tracing
+#         prompt = get_prompt(task_desc, submission, solution, trace).strip()
 
-    print(prompt)
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are an AI teaching assistant helping a student with a coding task. You should answer the student's question in ways that will promote learning and understanding. Do not include a model solution, the corrected code, or automated tests in the response."},
-            {"role": "user", "content": prompt},
-        ],
-        stream=True
-    )
+#     print(prompt)
+#     response = client.chat.completions.create(
+#         model="gpt-4",
+#         messages=[
+#             {"role": "system", "content": "You are an AI teaching assistant helping a student with a coding task. You should answer the student's question in ways that will promote learning and understanding. Do not include a model solution, the corrected code, or automated tests in the response."},
+#             {"role": "user", "content": prompt},
+#         ],
+#         stream=True
+#     )
 
-    return response
+#     return response
 
 
 def get_naive_prompt(task_desc: str, submission: str) -> str:

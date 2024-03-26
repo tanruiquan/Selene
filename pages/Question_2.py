@@ -175,6 +175,26 @@ def generate_report(task_desc: str, submission: str, solution: str, is_naive: bo
     return response
 
 
+def save_graph(submission: str, solution: str, path="graphs") -> None:
+    st.session_state.q2_error_message = ""
+    X_train: torch.Tensor = torch.randint(0, 10000, (64, 100))
+    try:
+        torch.manual_seed(42)
+        exec(submission)
+        model = locals()["Model"]()
+        draw_graph(model, input_data=X_train, graph_name="q2_model",
+                   save_graph=True, directory=path)
+
+        torch.manual_seed(42)
+        exec(solution)
+        expected_model = locals()["ExpectedModel"]()
+        draw_graph(expected_model, input_data=X_train,
+                   graph_name="q2_expected_model", save_graph=True, directory=path)
+    except Exception as e:
+        st.session_state.is_correct = False
+        st.session_state.q2_error_message = e
+
+
 left_column, right_column = st.columns(2)
 
 
@@ -202,6 +222,7 @@ with left_column:
         st.markdown(task_desc)
 
     if st.button("Generate AI feedback"):
+        save_graph(submission, solution)
         if st.session_state.is_correct:
             content = "You have already solved the task!"
             st.chat_message("assistant").write(content)

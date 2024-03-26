@@ -4,3 +4,5 @@ openai
 torch 
 torchvision
 streamlit-monaco
+graphviz
+torchview

@@ -16,7 +16,7 @@ In this task, learners will practice implementing a Multi-Layer Perceptron (MLP)
 
 ### Data
 
-The dataset comprises 10,662 movie reviews, each represented as an feature vector of size 100. The labels are binary, with the class 'negative' mapped to 0 and 'positive' mapped to 1. The necessary data preprocessing, including vectorization and label mapping, has already been performed.
+The dataset comprises 10,662 movie reviews, each represented as a feature vector of size 100. The labels are binary, with the class 'negative' mapped to 0 and 'positive' mapped to 1. The necessary data preprocessing, including vectorization and label mapping, has already been performed.
 
 ### Learner Instructions
 

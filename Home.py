@@ -26,14 +26,3 @@ st.markdown("""
 - You will be provided with a partially implemented model containing errors. 
 - Your objective is to correct these errors.
 """)
-
-st.header("Configuration")
-selected_prompt = st.radio(
-    "Select the AI prompt",
-    ["Naive", "Smart"],
-    captions=["The prompt only contains the task description and submission.", "The prompt contains the task description, submission and trace outputs."])
-
-if selected_prompt == 'Naive':
-    st.session_state.is_naive_prompt = True
-else:
-    st.session_state.is_naive_prompt = False

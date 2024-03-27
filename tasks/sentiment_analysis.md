@@ -36,7 +36,7 @@ Define the output layer (out) with an input size of 64 and an output size of 2, 
 Define the log softmax layer, applied to the output for obtaining log probabilities over the sentiment classes.
 
 **Step 7: Define the Forward Pass**  
-In the `forward()` method, add `input` and `hidden` as the method's parameters. The method should accept **input tensor of shape (batch_size, seq_len=100)**, **hidden tensor of shape (num_layers=2, batch_size, hidden_size=512)** and return **output of shape (batch_size, output_size=2)**. Use the final hidden state of the input sequence as features for the classification. 
+In the `forward()` method, add `inputs` and `hidden` as the method's parameters. The method should accept **input tensor of shape (batch_size, seq_len=100)**, **hidden tensor of shape (num_layers=2, batch_size, hidden_size=512)** and return **output of shape (batch_size, output_size=2)**. Use the final hidden state of the input sequence as features for the classification. 
 
 **Step 8: Initialize Hidden State**  
 Implement the `init_hidden()` method to initialize the hidden state of the GRU layer. The method should return a tensor of zeros with the shape (num_layers=2, batch_size, hidden_size=512).

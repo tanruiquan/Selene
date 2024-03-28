@@ -5,7 +5,7 @@ from openai import OpenAI
 from streamlit_monaco import st_monaco
 from torchview import draw_graph
 
-from utils.utils import (LoggingModule, check_model, compare_model_traces,
+from utils.utils import (LoggingModule, check, compare_model_traces,
                          get_naive_prompt, get_prompt, read_file)
 
 # set basic page config
@@ -47,16 +47,11 @@ solution = read_file("solutions/movie_review_solution.py")
 
 def submit_button(submission: str, solution: str) -> None:
     st.session_state.clicked = True
-    st.session_state.error_message = ""
     try:
-        torch.manual_seed(0)
-        exec(submission)
-        model = locals()["Model"]()
-        torch.manual_seed(0)
-        exec(solution)
-        expected_model = locals()["ExpectedModel"]()
-        st.session_state.is_correct = check_model(
-            model, expected_model, nn.CrossEntropyLoss())
+        X_train: torch.Tensor = torch.randn(64, 100)
+        y_train: torch.Tensor = torch.randint(0, 1, (64,))
+        st.session_state.is_correct = check(
+            submission, solution, X_train, y_train)
     except Exception as e:
         st.session_state.is_correct = False
         st.session_state.error_message = e
@@ -64,11 +59,17 @@ def submit_button(submission: str, solution: str) -> None:
 
 def feedback_button(submission: str, solution: str) -> None:
     st.session_state.feedback_clicked = True
-    save_graph(submission, solution)
-    report1 = generate_report(task_desc, submission, solution, is_naive=True)
-    st.session_state.stream_message_left = report1
-    report2 = generate_report(task_desc, submission, solution, is_naive=False)
-    st.session_state.stream_message_right = report2
+    try:
+        save_graph(submission, solution)
+        report1 = generate_report(
+            task_desc, submission, solution, is_naive=True)
+        st.session_state.stream_message_left = report1
+        report2 = generate_report(
+            task_desc, submission, solution, is_naive=False)
+        st.session_state.stream_message_right = report2
+    except Exception as e:
+        st.session_state.is_correct = False
+        st.session_state.error_message = e
 
 
 def compare_with_hooks(submission: str, solution: str) -> str:
@@ -201,28 +202,6 @@ with left_column:
 
     feedback_clicked = st.button(
         "Generate feedback", on_click=feedback_button, args=(submission, solution))
-    # if feedback_clicked:
-    #     save_graph(submission, solution)
-
-    # if st.button("Generate AI feedback"):
-    #     save_graph(submission, solution)
-    #     if st.session_state.is_correct:
-    #         content = "You have already solved the task!"
-    #         st.chat_message("assistant").write(content)
-    #         st.session_state.messages.append(
-    #             {"role": "assistant", "content": content})
-    #     else:
-    #         chat_message = st.chat_message("assistant")
-    #         stream = generate_report(
-    #             task_desc, submission, solution, is_naive=st.session_state.is_naive_prompt)
-    #         response = st.chat_message("assistant").write_stream(stream)
-    #         st.session_state.messages.append(
-    #             {"role": "assistant", "content": response})
-    #     st.rerun()
-
-    # for message in reversed(st.session_state.messages):
-    #     with st.chat_message(message["role"]):
-    #         st.markdown(message["content"])
 
 with st.empty():
     if st.session_state.error_message:
@@ -261,47 +240,3 @@ if st.session_state.feedback_clicked:
                     response = st.write_stream(
                         st.session_state.stream_message_right)
                 st.session_state.message_right = response
-
-# left_feedback, right_feedback = st.columns(2)
-
-# with left_feedback:
-#     if st.session_state.feedback_clicked:
-#         st.subheader("Your model")
-#         st.image("graphs/model.gv.png", caption="Your model")
-
-#         if st.session_state.stream_message_left:
-#             assistant = st.chat_message("assistant")
-#         if st.session_state.message_left:
-#             with st.chat_message("assistant"):
-#                 st.markdown(st.session_state.message_left[-1]['content'])
-#         # for msg in reversed(st.session_state.message_left):
-#         #     with st.chat_message("assistant"):
-#         #         st.markdown(msg['content'])
-#         # with st.chat_message("assistant"):
-#         #     stream = generate_report(task_desc, submission, solution, is_naive=True)
-#         #     response = st.write_stream(stream)
-
-# with right_feedback:
-#     if st.session_state.feedback_clicked:
-#         st.subheader("Expected model")
-#         st.image("graphs/expected_model.gv.png", caption="Expected model")
-
-#         if st.session_state.stream_message_left:
-#             response = assistant.write_stream(
-#                 st.session_state.stream_message_left)
-#             st.session_state.message_left.append(
-#                 {"role": "assistant", "content": response})
-#             st.session_state.stream_message_left = ""
-
-#         if st.session_state.message_right:
-#             with st.chat_message("assistant"):
-#                 st.markdown(st.session_state.message_right[-1]['content'])
-#         if st.session_state.stream_message_right:
-#             with st.chat_message("assistant"):
-#                 response = st.write_stream(st.session_state.stream_message_right)
-#                 st.session_state.message_right.append(
-#                     {"role": "assistant", "content": response})
-#                 st.session_state.stream_message_right = ""
-        # for msg in reversed(st.session_state.message_right):
-        #     with st.chat_message("assistant"):
-        #         st.markdown(msg['content'])

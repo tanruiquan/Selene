@@ -10,15 +10,23 @@ def read_file(file_path):
     return Path(file_path).read_text()
 
 
-def check_model(model: nn.Module, expected_model: nn.Module, criterion: nn.modules.loss._Loss, optimizer: torch.optim.Optimizer = torch.optim.Adam, num_epochs: int = 10, device: str = "cpu"):
-    # Question 1
-    X_train: torch.Tensor = torch.randn(64, 100)
-    y_train: torch.Tensor = torch.randint(0, 1, (64,))
-    losses = train(model, X_train, y_train, criterion, optimizer(
-        model.parameters()), num_epochs, device)
-    expected_losses = train(expected_model, X_train, y_train, criterion, optimizer(
-        expected_model.parameters()), num_epochs, device)
-    return losses == expected_losses
+def check(submission: str, solution: str, X_train: torch.Tensor, y_train: torch.Tensor) -> bool:
+    criterion = nn.NLLLoss()
+    num_epochs = 5
+
+    torch.manual_seed(42)
+    exec(submission)
+    model = locals()["Model"]()
+    optimizer = torch.optim.Adam(model.parameters())
+    losses = train(model, X_train, y_train, optimizer, criterion, num_epochs)
+
+    torch.manual_seed(42)
+    exec(solution)
+    expected_model = locals()["ExpectedModel"]()
+    expected_optimizer = torch.optim.Adam(expected_model.parameters())
+    expected_losses = train(expected_model, X_train,
+                            y_train, expected_optimizer, criterion, num_epochs)
+    return losses == expected_lossess
 
 
 def train(model: nn.Module, X_train: torch.Tensor, y_train: torch.Tensor, criterion: torch.nn.modules.loss._Loss, optimizer: torch.optim.Optimizer = torch.optim.Adam, num_epochs: int = 10, device: str = "cpu"):
@@ -40,40 +48,6 @@ def train(model: nn.Module, X_train: torch.Tensor, y_train: torch.Tensor, criter
         print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
         losses.append(loss.item())
     return losses
-
-
-# def generate_report(client, task_desc: str, submission: str, solution: str, is_naive: bool = False):
-#     if is_naive:
-#         prompt = get_naive_prompt(task_desc, submission).strip()
-#     else:
-#         # Modules tracing
-#         torch.manual_seed(0)
-#         exec(submission)
-#         model = locals()["Model"]()
-#         torch.manual_seed(0)
-#         exec(solution)
-#         expected_model = locals()["ExpectedModel"]()
-#         trace = compare_model_traces(model, expected_model)
-
-#         if not trace:
-#             # Hook tracing
-#             trace = "Hook"
-#             raise NotImplementedError()
-
-#         # Hooks tracing
-#         prompt = get_prompt(task_desc, submission, solution, trace).strip()
-
-#     print(prompt)
-#     response = client.chat.completions.create(
-#         model="gpt-4",
-#         messages=[
-#             {"role": "system", "content": "You are an AI teaching assistant helping a student with a coding task. You should answer the student's question in ways that will promote learning and understanding. Do not include a model solution, the corrected code, or automated tests in the response."},
-#             {"role": "user", "content": prompt},
-#         ],
-#         stream=True
-#     )
-
-#     return response
 
 
 def get_naive_prompt(task_desc: str, submission: str) -> str:

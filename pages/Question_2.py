@@ -252,24 +252,6 @@ with left_column:
     feedback_clicked = st.button(
         "Generate feedback", on_click=feedback_button, args=(submission, solution))
 
-    # if st.button("Generate AI feedback"):
-    #     save_graph(submission, solution)
-    #     if st.session_state.is_correct:
-    #         content = "You have already solved the task!"
-    #         st.chat_message("assistant").write(content)
-    #         st.session_state.q2_messages.append(
-    #             {"role": "assistant", "content": content})
-    #     else:
-    #         stream = generate_report(
-    #             task_desc, submission, solution, is_naive=st.session_state.is_naive_prompt)
-    #         response = st.chat_message("assistant").write_stream(stream)
-    #         st.session_state.q2_messages.append(
-    #             {"role": "assistant", "content": response})
-    #     st.rerun()
-
-    # for message in reversed(st.session_state.q2_messages):
-    #     with st.chat_message(message["role"]):
-    #         st.markdown(message["content"])
 
 with st.empty():
     if st.session_state.q2_error_message:

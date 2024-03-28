@@ -5,7 +5,7 @@ from openai import OpenAI
 from streamlit_monaco import st_monaco
 from torchview import draw_graph
 
-from utils.utils import (LoggingModule, check_model, compare_model_traces,
+from utils.utils import (LoggingModule, check, compare_model_traces,
                          get_naive_prompt, get_prompt, read_file)
 
 # set basic page config
@@ -47,16 +47,11 @@ solution = read_file("solutions/movie_review_solution.py")
 
 def submit_button(submission: str, solution: str) -> None:
     st.session_state.clicked = True
-    st.session_state.q3_error_message = ""
     try:
-        torch.manual_seed(0)
-        exec(submission)
-        model = locals()["Model"]()
-        torch.manual_seed(0)
-        exec(solution)
-        expected_model = locals()["ExpectedModel"]()
-        st.session_state.is_correct = check_model(
-            model, expected_model, nn.CrossEntropyLoss())
+        X_train: torch.Tensor = torch.randn(64, 100)
+        y_train: torch.Tensor = torch.randint(0, 1, (64,))
+        st.session_state.is_correct = check(
+            submission, solution, X_train, y_train)
     except Exception as e:
         st.session_state.is_correct = False
         st.session_state.q3_error_message = e
@@ -64,11 +59,17 @@ def submit_button(submission: str, solution: str) -> None:
 
 def feedback_button(submission: str, solution: str) -> None:
     st.session_state.q3_feedback_clicked = True
-    save_graph(submission, solution)
-    report1 = generate_report(task_desc, submission, solution, is_naive=True)
-    st.session_state.q3_stream_message_left = report1
-    report2 = generate_report(task_desc, submission, solution, is_naive=False)
-    st.session_state.q3_stream_message_right = report2
+    try:
+        save_graph(submission, solution)
+        report1 = generate_report(
+            task_desc, submission, solution, is_naive=True)
+        st.session_state.q3_stream_message_left = report1
+        report2 = generate_report(
+            task_desc, submission, solution, is_naive=False)
+        st.session_state.q3_stream_message_right = report2
+    except Exception as e:
+        st.session_state.is_correct = False
+        st.session_state.q3_error_message = e
 
 
 def compare_with_hooks(submission: str, solution: str) -> str:

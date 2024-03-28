@@ -5,7 +5,7 @@ from openai import OpenAI
 from streamlit_monaco import st_monaco
 from torchview import draw_graph
 
-from utils.utils import (LoggingModule, check, compare_model_traces,
+from utils.utils import (LoggingModule, check, compare_layers,
                          get_naive_prompt, get_prompt, read_file)
 
 # set basic page config
@@ -46,7 +46,6 @@ solution = read_file("solutions/movie_review_solution.py")
 
 
 def submit_button(submission: str, solution: str) -> None:
-    st.session_state.clicked = True
     try:
         X_train: torch.Tensor = torch.randn(64, 100)
         y_train: torch.Tensor = torch.randint(0, 1, (64,))
@@ -134,7 +133,7 @@ def generate_report(task_desc: str, submission: str, solution: str, is_naive: bo
             torch.manual_seed(0)
             exec(solution)
             expected_model = locals()["ExpectedModel"]()
-            trace = compare_model_traces(model, expected_model)
+            trace = compare_layers(model, expected_model)
         except Exception as e:
             st.session_state.is_correct = False
             st.session_state.error_message = e

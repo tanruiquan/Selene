@@ -62,7 +62,7 @@ def get_naive_prompt(task_desc: str, submission: str) -> str:
 """
 
 
-def compare_model_traces(submitted_model: nn.Module, expected_model: nn.Module) -> str:
+def compare_layers(submitted_model: nn.Module, expected_model: nn.Module) -> str:
     result = []
 
     submitted_modules = get_modules(submitted_model)
@@ -192,7 +192,7 @@ def is_activation_function(module: nn.Module) -> bool:
     return isinstance(module, all_activation_functions)
 
 
-def get_prompt(task_desc: str, submission: str, solution: str, trace: str) -> str:
+def get_prompt(task_desc: str, submission: str, solution: str, context: str) -> str:
     return f"""
 # Task description
 {task_desc}
@@ -201,7 +201,7 @@ def get_prompt(task_desc: str, submission: str, solution: str, trace: str) -> st
 {submission}
 
 # Context
-{trace}
+{context}
 
 # Answer
 """

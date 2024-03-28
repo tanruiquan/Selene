@@ -26,8 +26,8 @@ WORKDIR /app
 
 # if we have a packages.txt, install it here, uncomment the two lines below
 # be aware that packages.txt must have LF endings only!
-# COPY packages.txt packages.txt
-# RUN xargs -a packages.txt apt-get install --yes
+COPY packages.txt packages.txt
+RUN xargs -a packages.txt apt-get install --yes
 
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade -r requirements.txt

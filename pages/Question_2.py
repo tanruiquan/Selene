@@ -172,14 +172,18 @@ def generate_report(task_desc: str, submission: str, solution: str, is_naive: bo
     if is_naive:
         prompt = get_naive_prompt(task_desc, submission).strip()
     else:
-        # Modules tracing
-        torch.manual_seed(0)
-        exec(submission)
-        model = locals()["Model"]()
-        torch.manual_seed(0)
-        exec(solution)
-        expected_model = locals()["ExpectedModel"]()
-        trace = compare_model_traces(model, expected_model)
+        try:
+            torch.manual_seed(0)
+            exec(submission)
+            model = locals()["Model"]()
+            torch.manual_seed(0)
+            exec(solution)
+            expected_model = locals()["ExpectedModel"]()
+            trace = compare_model_traces(model, expected_model)
+        except Exception as e:
+            st.session_state.is_correct = False
+            st.session_state.q2_error_message = e
+            trace = str(e)
 
         if not trace:
             trace = compare_with_hooks(submission, solution)

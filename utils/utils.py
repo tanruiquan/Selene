@@ -94,17 +94,15 @@ def compare_model_traces(submitted_model: nn.Module, expected_model: nn.Module) 
     submitted_modules = get_modules(submitted_model)
     expected_modules = get_modules(expected_model)
     print(f"Submitted: {submitted_modules}, \nExpected: {expected_modules}")
-
+    c1 = Counter(map(lambda x: type(x), expected_modules))
+    c2 = Counter(map(lambda x: type(x), submitted_modules))
     if len(submitted_modules) > len(expected_modules):
-        c1 = Counter(submitted_modules)
-        c2 = Counter(expected_modules)
-        diff = c1 - c2
+        diff = c2 - c1
         extra = ", ".join(map(lambda x: x.__name__, diff.keys()))
         return f"The student has the following extra layers: {extra}."
     elif len(expected_modules) > len(submitted_modules):
-        c1 = Counter(map(lambda x: type(x), expected_modules))
-        c2 = Counter(map(lambda x: type(x), submitted_modules))
         diff = c1 - c2
+        print(diff)
         missing = ", ".join(map(lambda x: x.__name__, diff.keys()))
         return f"The student has the following missing layers: {missing}."
 
@@ -115,7 +113,7 @@ def compare_model_traces(submitted_model: nn.Module, expected_model: nn.Module) 
     for s, e in zip(submitted_modules, expected_modules):
         if type(s) != type(e):
             result.append(
-                f"The student's {make_ordinal(module_count)} layer is a {s.__name__} layer while the expected layer is a {e.__name__} layer.")
+                f"The student's {make_ordinal(module_count)} layer is a {s.__class__.__name__} layer while the expected layer is a {e.__class__.__name__} layer.")
         elif isinstance(s, nn.Linear):
             if s.in_features != e.in_features or s.out_features != e.out_features:
                 result.append(
@@ -129,7 +127,7 @@ def compare_model_traces(submitted_model: nn.Module, expected_model: nn.Module) 
             linear_layer_count += 1
         elif is_activation_function(s) and type(s) != type(e):
             result.append(
-                f"The student's {make_ordinal(activation_function_count)} activation function is a {s.__name__} function while the expected activation function is a {e.__name__}.")
+                f"The student's {make_ordinal(activation_function_count)} activation function is a {s.__class__.__name__} function while the expected activation function is a {e.__class__.__name__}.")
             activation_function_count += 1
         elif isinstance(s, nn.Dropout) and s.p != e.p:
             result.append(

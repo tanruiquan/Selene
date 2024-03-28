@@ -74,17 +74,21 @@ def feedback_button(submission: str, solution: str) -> None:
 def compare_with_hooks(submission: str, solution: str) -> str:
     X_train: torch.Tensor = torch.randn(64, 100)
 
-    torch.manual_seed(42)
-    exec(submission)
-    model = locals()["Model"]()
-    with LoggingModule(model) as model:
-        logs = model(X_train)
+    try:
+        torch.manual_seed(42)
+        exec(submission)
+        model = locals()["Model"]()
+        with LoggingModule(model) as model:
+            logs = model(X_train)
 
-    torch.manual_seed(42)
-    exec(solution)
-    expected_model = locals()["ExpectedModel"]()
-    with LoggingModule(expected_model) as expected_model:
-        expected_logs = expected_model(X_train)
+        torch.manual_seed(42)
+        exec(solution)
+        expected_model = locals()["ExpectedModel"]()
+        with LoggingModule(expected_model) as expected_model:
+            expected_logs = expected_model(X_train)
+    except Exception as e:
+        st.session_state.is_correct = False
+        st.session_state.q3_error_message = e
 
     assert len(logs) == len(expected_logs)
 
@@ -122,14 +126,18 @@ def generate_report(task_desc: str, submission: str, solution: str, is_naive: bo
     if is_naive:
         prompt = get_naive_prompt(task_desc, submission).strip()
     else:
-        # Modules tracing
-        torch.manual_seed(0)
-        exec(submission)
-        model = locals()["Model"]()
-        torch.manual_seed(0)
-        exec(solution)
-        expected_model = locals()["ExpectedModel"]()
-        trace = compare_model_traces(model, expected_model)
+        try:
+            torch.manual_seed(0)
+            exec(submission)
+            model = locals()["Model"]()
+            torch.manual_seed(0)
+            exec(solution)
+            expected_model = locals()["ExpectedModel"]()
+            trace = compare_model_traces(model, expected_model)
+        except Exception as e:
+            st.session_state.is_correct = False
+            st.session_state.q3_error_message = e
+            trace = str(e)
 
         if not trace:
             trace = compare_with_hooks(submission, solution)
@@ -209,7 +217,8 @@ if st.session_state.q3_feedback_clicked:
             st.image("graphs/q3_model.gv.png", caption="Your model")
         with right_graph:
             st.subheader("Expected model")
-            st.image("graphs/q3_expected_model.gv.png", caption="Expected model")
+            st.image("graphs/q3_expected_model.gv.png",
+                     caption="Expected model")
 
     with text_feedback:
         left_text, right_text = st.columns(2)

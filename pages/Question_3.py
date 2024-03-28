@@ -19,35 +19,35 @@ st.title(":books: Selene")
 if "client" not in st.session_state:
     st.session_state.client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-if "stream_message_left" not in st.session_state:
-    st.session_state.stream_message_left = ""
+if "q3_stream_message_left" not in st.session_state:
+    st.session_state.q3_stream_message_left = ""
 
-if "message_left" not in st.session_state:
-    st.session_state.message_left = ""
+if "q3_message_left" not in st.session_state:
+    st.session_state.q3_message_left = ""
 
-if "stream_message_right" not in st.session_state:
-    st.session_state.stream_message_right = ""
+if "q3_stream_message_right" not in st.session_state:
+    st.session_state.q3_stream_message_right = ""
 
-if "message_right" not in st.session_state:
-    st.session_state.message_right = ""
+if "q3_message_right" not in st.session_state:
+    st.session_state.q3_message_right = ""
 
-if "error_message" not in st.session_state:
-    st.session_state.error_message = ""
+if "q3_error_message" not in st.session_state:
+    st.session_state.q3_error_message = ""
 
 if 'is_correct' not in st.session_state:
     st.session_state.is_correct = False
 
-if "feedback_clicked" not in st.session_state:
-    st.session_state.feedback_clicked = False
+if "q3_feedback_clicked" not in st.session_state:
+    st.session_state.q3_feedback_clicked = False
 
 task_desc = read_file("tasks/movie_review_sentiment_classification.md")
-attempt = read_file("attempts/movie_review_attempt.py")
+attempt = read_file("attempts/movie_review_attempt2.py")
 solution = read_file("solutions/movie_review_solution.py")
 
 
 def submit_button(submission: str, solution: str) -> None:
     st.session_state.clicked = True
-    st.session_state.error_message = ""
+    st.session_state.q3_error_message = ""
     try:
         torch.manual_seed(0)
         exec(submission)
@@ -59,16 +59,16 @@ def submit_button(submission: str, solution: str) -> None:
             model, expected_model, nn.CrossEntropyLoss())
     except Exception as e:
         st.session_state.is_correct = False
-        st.session_state.error_message = e
+        st.session_state.q3_error_message = e
 
 
 def feedback_button(submission: str, solution: str) -> None:
-    st.session_state.feedback_clicked = True
+    st.session_state.q3_feedback_clicked = True
     save_graph(submission, solution)
     report1 = generate_report(task_desc, submission, solution, is_naive=True)
-    st.session_state.stream_message_left = report1
+    st.session_state.q3_stream_message_left = report1
     report2 = generate_report(task_desc, submission, solution, is_naive=False)
-    st.session_state.stream_message_right = report2
+    st.session_state.q3_stream_message_right = report2
 
 
 def compare_with_hooks(submission: str, solution: str) -> str:
@@ -150,22 +150,22 @@ def generate_report(task_desc: str, submission: str, solution: str, is_naive: bo
 
 
 def save_graph(submission: str, solution: str, path="graphs") -> None:
-    st.session_state.error_message = ""
+    st.session_state.q3_error_message = ""
     try:
         torch.manual_seed(42)
         exec(submission)
         model = locals()["Model"]()
         draw_graph(model, input_data=torch.randn(64, 100),
-                   graph_name="model", save_graph=True, directory=path)
+                   graph_name="q3_model", save_graph=True, directory=path)
 
         torch.manual_seed(42)
         exec(solution)
         expected_model = locals()["ExpectedModel"]()
         draw_graph(expected_model, input_data=torch.randn(64, 100),
-                   graph_name="expected_model", save_graph=True, directory=path)
+                   graph_name="q3_expected_model", save_graph=True, directory=path)
     except Exception as e:
         st.session_state.is_correct = False
-        st.session_state.error_message = e
+        st.session_state.q3_error_message = e
 
 
 left_column, right_column = st.columns(2)
@@ -191,109 +191,43 @@ with left_column:
     with st.container(height=500):
         st.markdown(task_desc)
 
-    feedback_clicked = st.button(
+    q3_feedback_clicked = st.button(
         "Generate feedback", on_click=feedback_button, args=(submission, solution))
-    # if feedback_clicked:
-    #     save_graph(submission, solution)
-
-    # if st.button("Generate AI feedback"):
-    #     save_graph(submission, solution)
-    #     if st.session_state.is_correct:
-    #         content = "You have already solved the task!"
-    #         st.chat_message("assistant").write(content)
-    #         st.session_state.messages.append(
-    #             {"role": "assistant", "content": content})
-    #     else:
-    #         chat_message = st.chat_message("assistant")
-    #         stream = generate_report(
-    #             task_desc, submission, solution, is_naive=st.session_state.is_naive_prompt)
-    #         response = st.chat_message("assistant").write_stream(stream)
-    #         st.session_state.messages.append(
-    #             {"role": "assistant", "content": response})
-    #     st.rerun()
-
-    # for message in reversed(st.session_state.messages):
-    #     with st.chat_message(message["role"]):
-    #         st.markdown(message["content"])
 
 with st.empty():
-    if st.session_state.error_message:
-        st.exception(st.session_state.error_message)
+    if st.session_state.q3_error_message:
+        st.exception(st.session_state.q3_error_message)
 
 
-if st.session_state.feedback_clicked:
+if st.session_state.q3_feedback_clicked:
     graph_feedback, text_feedback = st.tabs(
         ["Graph feedback", "Text feedback"])
     with graph_feedback:
         left_graph, right_graph = st.columns(2)
         with left_graph:
             st.subheader("Your model")
-            st.image("graphs/model.gv.png", caption="Your model")
+            st.image("graphs/q3_model.gv.png", caption="Your model")
         with right_graph:
             st.subheader("Expected model")
-            st.image("graphs/expected_model.gv.png", caption="Expected model")
+            st.image("graphs/q3_expected_model.gv.png", caption="Expected model")
 
     with text_feedback:
         left_text, right_text = st.columns(2)
         with left_text:
-            if st.session_state.message_left and not feedback_clicked:
+            if st.session_state.q3_message_left and not q3_feedback_clicked:
                 with st.chat_message("assistant"):
-                    st.markdown(st.session_state.message_left)
-            if st.session_state.stream_message_left and feedback_clicked:
+                    st.markdown(st.session_state.q3_message_left)
+            if st.session_state.q3_stream_message_left and q3_feedback_clicked:
                 with st.chat_message("assistant"):
                     response = st.write_stream(
-                        st.session_state.stream_message_left)
-                st.session_state.message_left = response
+                        st.session_state.q3_stream_message_left)
+                st.session_state.q3_message_left = response
         with right_text:
-            if st.session_state.message_right and not feedback_clicked:
+            if st.session_state.q3_message_right and not q3_feedback_clicked:
                 with st.chat_message("assistant"):
-                    st.markdown(st.session_state.message_right)
-            if st.session_state.stream_message_right and feedback_clicked:
+                    st.markdown(st.session_state.q3_message_right)
+            if st.session_state.q3_stream_message_right and q3_feedback_clicked:
                 with st.chat_message("assistant"):
                     response = st.write_stream(
-                        st.session_state.stream_message_right)
-                st.session_state.message_right = response
-
-# left_feedback, right_feedback = st.columns(2)
-
-# with left_feedback:
-#     if st.session_state.feedback_clicked:
-#         st.subheader("Your model")
-#         st.image("graphs/model.gv.png", caption="Your model")
-
-#         if st.session_state.stream_message_left:
-#             assistant = st.chat_message("assistant")
-#         if st.session_state.message_left:
-#             with st.chat_message("assistant"):
-#                 st.markdown(st.session_state.message_left[-1]['content'])
-#         # for msg in reversed(st.session_state.message_left):
-#         #     with st.chat_message("assistant"):
-#         #         st.markdown(msg['content'])
-#         # with st.chat_message("assistant"):
-#         #     stream = generate_report(task_desc, submission, solution, is_naive=True)
-#         #     response = st.write_stream(stream)
-
-# with right_feedback:
-#     if st.session_state.feedback_clicked:
-#         st.subheader("Expected model")
-#         st.image("graphs/expected_model.gv.png", caption="Expected model")
-
-#         if st.session_state.stream_message_left:
-#             response = assistant.write_stream(
-#                 st.session_state.stream_message_left)
-#             st.session_state.message_left.append(
-#                 {"role": "assistant", "content": response})
-#             st.session_state.stream_message_left = ""
-
-#         if st.session_state.message_right:
-#             with st.chat_message("assistant"):
-#                 st.markdown(st.session_state.message_right[-1]['content'])
-#         if st.session_state.stream_message_right:
-#             with st.chat_message("assistant"):
-#                 response = st.write_stream(st.session_state.stream_message_right)
-#                 st.session_state.message_right.append(
-#                     {"role": "assistant", "content": response})
-#                 st.session_state.stream_message_right = ""
-        # for msg in reversed(st.session_state.message_right):
-        #     with st.chat_message("assistant"):
-        #         st.markdown(msg['content'])
+                        st.session_state.q3_stream_message_right)
+                st.session_state.q3_message_right = response

@@ -26,10 +26,10 @@ def check(submission: str, solution: str, X_train: torch.Tensor, y_train: torch.
     expected_optimizer = torch.optim.Adam(expected_model.parameters())
     expected_losses = train(expected_model, X_train,
                             y_train, expected_optimizer, criterion, num_epochs)
-    return losses == expected_lossess
+    return losses == expected_losses
 
 
-def train(model: nn.Module, X_train: torch.Tensor, y_train: torch.Tensor, criterion: torch.nn.modules.loss._Loss, optimizer: torch.optim.Optimizer = torch.optim.Adam, num_epochs: int = 10, device: str = "cpu"):
+def train(model: nn.Module, X_train: torch.Tensor, y_train: torch.Tensor,  optimizer: torch.optim.Optimizer, criterion: torch.nn.modules.loss._Loss, num_epochs: int = 10, device: str = "cpu"):
     model.to(device)
     X_train, y_train = X_train.to(device), y_train.to(device)
     model.train()
@@ -67,7 +67,7 @@ def compare_layers(submitted_model: nn.Module, expected_model: nn.Module) -> str
 
     submitted_modules = get_modules(submitted_model)
     expected_modules = get_modules(expected_model)
-    print(f"Submitted: {submitted_modules}, \nExpected: {expected_modules}")
+    # print(f"Submitted: {submitted_modules}, \nExpected: {expected_modules}")
     c1 = Counter(map(lambda x: type(x), expected_modules))
     c2 = Counter(map(lambda x: type(x), submitted_modules))
     if len(submitted_modules) > len(expected_modules):

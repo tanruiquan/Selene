@@ -61,10 +61,10 @@ def feedback_button(submission: str, solution: str) -> None:
     try:
         save_graph(submission, solution, prefix=question)
         report1 = generate_report(
-            task_desc, submission, solution, is_naive=True)
+            task_desc, submission, solution, is_naive=False)
         st.session_state.q4_stream_message_left = report1
         report2 = generate_report(
-            task_desc, submission, solution, is_naive=False)
+            task_desc, submission, solution, is_naive=True)
         st.session_state.q4_stream_message_right = report2
     except Exception as e:
         st.session_state.is_correct = False

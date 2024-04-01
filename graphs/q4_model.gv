@@ -29,7 +29,7 @@ strict digraph q4_model {
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
                     <TR>
-                        <TD ROWSPAN="2">permute<BR/>depth:1</TD>
+                        <TD ROWSPAN="2">view<BR/>depth:1</TD>
                         <TD COLSPAN="2">input:</TD>
                         <TD COLSPAN="2">(64, 100, 300) </TD>
                     </TR>
@@ -55,110 +55,123 @@ strict digraph q4_model {
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
                     <TR>
-                        <TD ROWSPAN="2">Linear<BR/>depth:1</TD>
+                        <TD ROWSPAN="2">__getitem__<BR/>depth:1</TD>
                         <TD COLSPAN="2">input:</TD>
                         <TD COLSPAN="2">(2, 64, 512) </TD>
                     </TR>
                     <TR>
                         <TD COLSPAN="2">output: </TD>
-                        <TD COLSPAN="2">(2, 64, 128) </TD>
+                        <TD COLSPAN="2">(64, 512) </TD>
                     </TR>
-                    </TABLE>> fillcolor=darkseagreen1]
+                    </TABLE>> fillcolor=aliceblue]
 	6 [label=<
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
                     <TR>
-                        <TD ROWSPAN="2">ReLU<BR/>depth:1</TD>
+                        <TD ROWSPAN="2">Linear<BR/>depth:1</TD>
                         <TD COLSPAN="2">input:</TD>
-                        <TD COLSPAN="2">(2, 64, 128) </TD>
+                        <TD COLSPAN="2">(64, 512) </TD>
                     </TR>
                     <TR>
                         <TD COLSPAN="2">output: </TD>
-                        <TD COLSPAN="2">(2, 64, 128) </TD>
+                        <TD COLSPAN="2">(64, 128) </TD>
                     </TR>
                     </TABLE>> fillcolor=darkseagreen1]
 	7 [label=<
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
                     <TR>
-                        <TD ROWSPAN="2">Dropout<BR/>depth:1</TD>
+                        <TD ROWSPAN="2">ReLU<BR/>depth:1</TD>
                         <TD COLSPAN="2">input:</TD>
-                        <TD COLSPAN="2">(2, 64, 128) </TD>
+                        <TD COLSPAN="2">(64, 128) </TD>
                     </TR>
                     <TR>
                         <TD COLSPAN="2">output: </TD>
-                        <TD COLSPAN="2">(2, 64, 128) </TD>
+                        <TD COLSPAN="2">(64, 128) </TD>
                     </TR>
                     </TABLE>> fillcolor=darkseagreen1]
 	8 [label=<
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
                     <TR>
-                        <TD ROWSPAN="2">Linear<BR/>depth:1</TD>
+                        <TD ROWSPAN="2">Dropout<BR/>depth:1</TD>
                         <TD COLSPAN="2">input:</TD>
-                        <TD COLSPAN="2">(2, 64, 128) </TD>
+                        <TD COLSPAN="2">(64, 128) </TD>
                     </TR>
                     <TR>
                         <TD COLSPAN="2">output: </TD>
-                        <TD COLSPAN="2">(2, 64, 64) </TD>
+                        <TD COLSPAN="2">(64, 128) </TD>
                     </TR>
                     </TABLE>> fillcolor=darkseagreen1]
 	9 [label=<
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
                     <TR>
-                        <TD ROWSPAN="2">ReLU<BR/>depth:1</TD>
+                        <TD ROWSPAN="2">Linear<BR/>depth:1</TD>
                         <TD COLSPAN="2">input:</TD>
-                        <TD COLSPAN="2">(2, 64, 64) </TD>
+                        <TD COLSPAN="2">(64, 128) </TD>
                     </TR>
                     <TR>
                         <TD COLSPAN="2">output: </TD>
-                        <TD COLSPAN="2">(2, 64, 64) </TD>
+                        <TD COLSPAN="2">(64, 64) </TD>
                     </TR>
                     </TABLE>> fillcolor=darkseagreen1]
 	10 [label=<
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
                     <TR>
-                        <TD ROWSPAN="2">Dropout<BR/>depth:1</TD>
+                        <TD ROWSPAN="2">ReLU<BR/>depth:1</TD>
                         <TD COLSPAN="2">input:</TD>
-                        <TD COLSPAN="2">(2, 64, 64) </TD>
+                        <TD COLSPAN="2">(64, 64) </TD>
                     </TR>
                     <TR>
                         <TD COLSPAN="2">output: </TD>
-                        <TD COLSPAN="2">(2, 64, 64) </TD>
+                        <TD COLSPAN="2">(64, 64) </TD>
                     </TR>
                     </TABLE>> fillcolor=darkseagreen1]
 	11 [label=<
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
                     <TR>
-                        <TD ROWSPAN="2">Linear<BR/>depth:1</TD>
+                        <TD ROWSPAN="2">Dropout<BR/>depth:1</TD>
                         <TD COLSPAN="2">input:</TD>
-                        <TD COLSPAN="2">(2, 64, 64) </TD>
+                        <TD COLSPAN="2">(64, 64) </TD>
                     </TR>
                     <TR>
                         <TD COLSPAN="2">output: </TD>
-                        <TD COLSPAN="2">(2, 64, 2) </TD>
+                        <TD COLSPAN="2">(64, 64) </TD>
                     </TR>
                     </TABLE>> fillcolor=darkseagreen1]
 	12 [label=<
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
                     <TR>
-                        <TD ROWSPAN="2">LogSoftmax<BR/>depth:1</TD>
+                        <TD ROWSPAN="2">Linear<BR/>depth:1</TD>
                         <TD COLSPAN="2">input:</TD>
-                        <TD COLSPAN="2">(2, 64, 2) </TD>
+                        <TD COLSPAN="2">(64, 64) </TD>
                     </TR>
                     <TR>
                         <TD COLSPAN="2">output: </TD>
-                        <TD COLSPAN="2">(2, 64, 2) </TD>
+                        <TD COLSPAN="2">(64, 2) </TD>
                     </TR>
                     </TABLE>> fillcolor=darkseagreen1]
 	13 [label=<
                     <TABLE BORDER="0" CELLBORDER="1"
                     CELLSPACING="0" CELLPADDING="4">
-                        <TR><TD>output-tensor<BR/>depth:0</TD><TD>(2, 64, 2)</TD></TR>
+                    <TR>
+                        <TD ROWSPAN="2">LogSoftmax<BR/>depth:1</TD>
+                        <TD COLSPAN="2">input:</TD>
+                        <TD COLSPAN="2">(64, 2) </TD>
+                    </TR>
+                    <TR>
+                        <TD COLSPAN="2">output: </TD>
+                        <TD COLSPAN="2">(64, 2) </TD>
+                    </TR>
+                    </TABLE>> fillcolor=darkseagreen1]
+	14 [label=<
+                    <TABLE BORDER="0" CELLBORDER="1"
+                    CELLSPACING="0" CELLPADDING="4">
+                        <TR><TD>output-tensor<BR/>depth:0</TD><TD>(64, 2)</TD></TR>
                     </TABLE>> fillcolor=lightyellow]
 	0 -> 2
 	1 -> 4
@@ -173,4 +186,5 @@ strict digraph q4_model {
 	10 -> 11
 	11 -> 12
 	12 -> 13
+	13 -> 14
 }

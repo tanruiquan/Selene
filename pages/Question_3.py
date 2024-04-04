@@ -58,6 +58,7 @@ def submit_button(submission: str, solution: str) -> None:
 
 def feedback_button(submission: str, solution: str) -> None:
     st.session_state.q3_feedback_clicked = True
+    st.session_state.q3_error_message = ""
     try:
         save_graph(submission, solution)
         report1 = generate_report(

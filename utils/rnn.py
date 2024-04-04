@@ -139,6 +139,7 @@ def compare_with_hooks(submission: str, solution: str) -> str:
 def generate_report(task_desc: str, submission: str, solution: str, is_naive: bool = False):
     if is_naive:
         prompt = get_naive_prompt(task_desc, submission).strip()
+        system_prompt = "You are an AI teaching assistant helping a student with a coding task. You should answer the student's question in ways that will promote learning and understanding. Do not include a model solution, the corrected code, or automated tests in the response."
     else:
         try:
             context = compare_with_modules(
@@ -149,12 +150,13 @@ def generate_report(task_desc: str, submission: str, solution: str, is_naive: bo
             context = str(e)
 
         prompt = get_prompt(task_desc, submission, solution, context).strip()
+        system_prompt = "You are an AI teaching assistant helping a student with a coding task. You should answer the student's question in ways that will promote learning and understanding. Do not include a model solution, the corrected code, or automated tests in the response. Only provide feedback based on the context."
 
     print(prompt)
     response = st.session_state.client.chat.completions.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "You are an AI teaching assistant helping a student with a coding task. You should answer the student's question in ways that will promote learning and understanding. Do not include a model solution, the corrected code, or automated tests in the response."},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
         stream=True
